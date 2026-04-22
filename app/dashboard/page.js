@@ -87,7 +87,7 @@ export default function Dashboard() {
       <h2>Tus personajes</h2>
       {planillas.length === 0 && <p style={{ color: '#888' }}>Todavía no tenés personajes.</p>}
       {planillas.map(p => (
-        <div key={p.id} style={{ border: '1px solid #ccc', borderRadius: 6, padding: 16, marginBottom: 12 }}>
+        <div key={p.id} onClick={() => router.push(`/planilla/${p.id}`)} style={{ border: '1px solid #ccc', borderRadius: 6, padding: 16, marginBottom: 12 }}>
           <h3>{p.nombre}</h3>
           <p style={{ color: '#666' }}>{p.raza} · {p.clase} · Nivel {p.nivel}</p>
         </div>
