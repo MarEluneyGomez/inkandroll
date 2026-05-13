@@ -68,7 +68,7 @@ export default function BloqueHabilidades({
                 }}>
                     Habilidades
                 </div>
-
+                {console.log('stats:', stats, 'proficiency:', proficiency, 'competencies:', competencies)}
                 <div style={{ overflowY: 'auto', flex: 1, padding: '4px 0' }}>
                     {HABILIDADES.map(h => {
                         const bono = calcularBono(h.stat, h.id, stats, proficiency, competencies, expertises)

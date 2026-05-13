@@ -20,12 +20,12 @@ export const HABILIDADES = [
 ]
 
 export const HABILIDADES_POR_STAT = {
-    fuerza:         HABILIDADES.filter(h => h.stat = 'fuerza'),
-    destreza:       HABILIDADES.filter(h => h.stat = 'destreza'),
+    fuerza:         HABILIDADES.filter(h => h.stat === 'fuerza'),
+    destreza:       HABILIDADES.filter(h => h.stat === 'destreza'),
     constitucion:   [],
-    inteligencia:   HABILIDADES.filter(h => h.stat = 'inteligencia'),
-    sabiduria:      HABILIDADES.filter(h => h.stat = 'sabiduria'),
-    carisma:        HABILIDADES.filter(h => h.stat = 'carisma')
+    inteligencia:   HABILIDADES.filter(h => h.stat === 'inteligencia'),
+    sabiduria:      HABILIDADES.filter(h => h.stat === 'sabiduria'),
+    carisma:        HABILIDADES.filter(h => h.stat === 'carisma')
 }
 
 export function calcularModificador(valor) {
@@ -33,6 +33,7 @@ export function calcularModificador(valor) {
 }
 
 export function calcularBono(stat, habilidadId, stats, proficiency, competencies, expertises) {
+    console.log('stat:', stat, 'valor:', stats[stat])
     const mod = calcularModificador(stats[stat])
     const esCompetente = competencies?.includes(habilidadId)
     const esMaestria = expertises?.includes(habilidadId)

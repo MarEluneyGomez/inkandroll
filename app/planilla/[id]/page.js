@@ -39,6 +39,7 @@ export default function EditarPlanilla() {
     const [modoEdicion, setModoEdicion] = useState(true)
     const [mostrarGrilla, setMostrarGrilla] = useState(true)
     const [mostrarMenuAgregar, setMostrarMenuAgregar] = useState(false)
+    const [stats, setStats] = useState(null)
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: { distance: 5 }
@@ -53,6 +54,7 @@ export default function EditarPlanilla() {
                 .single()
             if (error || !data) { router.push('/dashboard'); return }
             setPlanilla(data)
+            setStats(data.stats)
             setBloques(data.layout?.length > 0 ? data.layout : BLOQUES_STATS_INICIALES(data.stats))
         }
         cargar()
@@ -80,10 +82,14 @@ export default function EditarPlanilla() {
     }
 
     function handleCambiarValor(id, nuevoValor) {
-    setBloques(prev => prev.map(b =>
-        b.id === id ? { ...b, valor: nuevoValor } : b
-    ))
-}
+        console.log('cambiando:', id, nuevoValor)
+        setBloques(prev => prev.map(b =>
+            b.id === id ? { ...b, valor: nuevoValor } : b
+        ))
+        if (['fuerza', 'destreza', 'constitucion', 'inteligencia', 'sabiduria', 'carisma'].includes(id)) {
+            setStats(prev => ({ ...prev, [id]: nuevoValor }))
+        }
+    }
 
     function agregarBloque(tipo) {
         const nuevoId = `${tipo}_${Date.now()}`
@@ -103,7 +109,10 @@ export default function EditarPlanilla() {
 
     async function guardarLayout() {
         setGuardando(true)
-        await supabase.from('planillas').update({ layout: bloques }).eq('id', id)
+        await supabase.from('planillas').update({ 
+            layout: bloques,
+            stats: stats
+         }).eq('id', id)
         setGuardando(false)
     }
 
@@ -189,7 +198,7 @@ export default function EditarPlanilla() {
                                 onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
                                 onRedimensionar={handleRedimensionar}
                                 modoEdicion={modoEdicion}
-                                stats={planilla.stats}
+                                stats={stats}
                                 proficiency={planilla.proficiency}
                                 competencies={planilla.competencies}
                                 expertises={planilla.expertises}
