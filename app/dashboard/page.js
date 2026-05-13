@@ -3,6 +3,8 @@
 import { createClient } from '../../lib/supabase'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+
 
 export default function Dashboard() {
   const [user, setUser] = useState(null)
@@ -43,6 +45,8 @@ export default function Dashboard() {
       clase,
       nivel: 1,
       stats: { fuerza: 10, destreza: 10, constitucion: 10, inteligencia: 10, sabiduria: 10, carisma: 10 },
+      proficiency: 2,
+      competencies: [],
       layout: []
     })
     if (!error) {

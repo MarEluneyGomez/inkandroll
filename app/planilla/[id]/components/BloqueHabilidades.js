@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { useDraggable } from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
-import { calcularModificador, formatearBono } from './habilidades'
+import { useDraggable } from "@dnd-kit/core"
+import { CSS } from "@dnd-kit/utilities"
+import { HABILIDADES, calcularBono, formatearBono } from "./habilidades"
 
 const GRILLA = 20
 
@@ -14,128 +13,88 @@ const esquinas = [
     { cursor: 'nw-resize', dx: -1, dy: -1 },
 ]
 
-export default function BloqueArrastrable({
+export default function BloqueHabilidades({
     bloque,
     seleccionado,
     onSeleccionar,
     onRedimensionar,
-    onCambiarValor,
-    modoEdicion
+    modoEdicion,
+    stats,
+    proficiency,
+    competencies,
+    expertises
 }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: bloque.id,
         disabled: !modoEdicion
     })
 
-    const [editando, setEditando] = useState(false)
-    const [valorTemp, setValorTemp] = useState('')
-
-    const ancho = bloque.ancho || 100
-    const alto = bloque.alto || 100
-    const esCirculo = bloque.forma === 'circulo'
-
-    function iniciarEdicion(e) {
-        console.log('doble click!')
-        e.stopPropagation()
-        setValorTemp(bloque.valor ?? 0)
-        setEditando(true)
-    }
-
-    function confirmarEdicion(){
-        const nuevo = parseInt(valorTemp)
-        if (!isNaN(nuevo)) onCambiarValor(bloque.id, nuevo)
-            setEditando(false)
-    }
-
-    const style = {
-        position: 'absolute',
-        left: bloque.x,
-        top: bloque.y,
-        transform: CSS.Translate.toString(transform),
-        background: bloque.color || '#f4ead5',
-        border: seleccionado ? '2px solid #c9a227' : '2px solid #2c1810',
-        borderRadius: esCirculo ? '50%' : 6,
-        width: ancho,
-        height: alto,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: modoEdicion ? 'grab' : 'default',
-        userSelect: 'none',
-        color: bloque.colorTexto || '#2c1810',
-        boxShadow: seleccionado
-            ? '0 0 0 3px rgba(201,162,39,0.5)'
-            : '2px 3px 8px rgba(0,0,0,0.4)',
-        transition: 'border 0.15s, box-shadow 0.15s'
-    }
+    const ancho = bloque.ancho || 200
+    const alto = bloque.alto || 400
 
     return (
         <>
             <div
                 ref={setNodeRef}
-                style={style}
-                {...(modoEdicion && !editando ? listeners : {})}
+                style={{
+                    position: 'absolute',
+                    left: bloque.x,
+                    top: bloque.y,
+                    transform: CSS.Translate.toString(transform),
+                    width: ancho,
+                    height: alto,
+                    background: bloque.color || '#f4ead5',
+                    border: seleccionado ? '2px solid #c9a227' : '2px solid #2c1810',
+                    borderRadius: 6,
+                    color: bloque.colorTexto || '#2c1810',
+                    cursor: modoEdicion ? 'grab' : 'default',
+                    userSelect: 'none',
+                    boxShadow: seleccionado ? '0 0 0 3px rgba(201,162,39,0.5)' : '2px 3px 8px rgba(0,0,0,0.4)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                }}
+                {...(modoEdicion ? listeners : {})}
                 {...(modoEdicion ? attributes : {})}
                 onClick={(e) => {
                     e.stopPropagation()
                     if (!isDragging) onSeleccionar(bloque.id)
                 }}
-                onDoubleClick={modoEdicion ? iniciarEdicion : undefined}
             >
                 <div style={{
-                    fontSize: 9,
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    marginBottom: 2,
-                    opacity: 0.7
+                    fontSize: 9, fontWeight: 'bold', textTransform: 'uppercase',
+                    padding: '6px 10px', borderBottom: '1px solid #2c1810',
+                    opacity: 0.7, flexShrink: 0
                 }}>
-                    {bloque.label}
+                    Habilidades
                 </div>
 
-                {editando ? (
-                    <input
-                        type="number"
-                        value={valorTemp}
-                        autoFocus
-                        onChange={(e) => setValorTemp(e.target.value)}
-                        onBlur={confirmarEdicion}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') confirmarEdicion()
-                            if (e.key === 'Escape') setEditando(false)
-                        }}
-                        style={{
-                            width: '70%',
-                            fontSize: 20,
-                            fontWeight: 900,
-                            textAlign: 'center',
-                            border: 'none',
-                            borderBottom: '2px solid #c9a227',
-                            background: 'transparent',
-                            color: bloque.colorTexto || '#2c1810',
-                            outline: 'none',
-                        }}
-                    />
-                ) : (
-                    <>
-                        <div style={{
-                            fontSize: esCirculo ? 22 : 26,
-                            fontWeight: 900,
-                            lineHeight: 1
-                        }}>
-                            {bloque.valor}
-                        </div>
-                        {bloque.tipo === 'stat' && (
-                            <div style={{
+                <div style={{ overflowY: 'auto', flex: 1, padding: '4px 0' }}>
+                    {HABILIDADES.map(h => {
+                        const bono = calcularBono(h.stat, h.id, stats, proficiency, competencies, expertises)
+                        const esCompetente = competencies?.includes(h.id)
+                        const esMaestria = expertises?.includes(h.id)
+
+                        return (
+                            <div key={h.id} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                padding: '2px 10px',
+                                gap: 6,
                                 fontSize: 11,
-                                opacity: 0.7,
-                                marginTop: 2
                             }}>
-                                {formatearBono(calcularModificador(bloque.valor))}
+                                <div style={{
+                                    width: 8, height: 8, borderRadius: '50%',
+                                    border: '1.5px solid #2c1810',
+                                    background: esMaestria ? '#c9a227' : esCompetente ? '#2c1810' : 'transparent',
+                                    flexShrink: 0
+                                }} />
+                                <span style={{ flex: 1 }}>{h.label}</span>
+                                <span style={{ fontWeight: 'bold' }}>{formatearBono(bono)}</span>
                             </div>
-                        )}
-                    </>
-                )}
+                        )
+                    })}
+                </div>
             </div>
 
             {modoEdicion && seleccionado && esquinas.map((esquina, i) => (
