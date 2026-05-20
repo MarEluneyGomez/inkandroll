@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { calcularModificador, formatearBono } from './habilidades'
+import { useState, useRef } from 'react'
 
 const GRILLA = 20
 
@@ -14,6 +14,8 @@ const esquinas = [
     { cursor: 'nw-resize', dx: -1, dy: -1 },
 ]
 
+
+
 export default function BloqueArrastrable({
     bloque,
     seleccionado,
@@ -21,7 +23,8 @@ export default function BloqueArrastrable({
     onRedimensionar,
     onCambiarValor,
     modoEdicion,
-    onEliminar
+    onEliminar,
+    onVerDetalle
 }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: bloque.id,
@@ -31,6 +34,7 @@ export default function BloqueArrastrable({
     const [editando, setEditando] = useState(false)
     const [valorTemp, setValorTemp] = useState('')
 
+    const bloqueRef = useRef(null)
     const ancho = bloque.ancho || 100
     const alto = bloque.alto || 100
     const esCirculo = bloque.forma === 'circulo'
@@ -74,13 +78,20 @@ export default function BloqueArrastrable({
     return (
         <>
             <div
-                ref={setNodeRef}
+                ref={(node) => { setNodeRef(node); bloqueRef.current = node }}
                 style={style}
                 {...(modoEdicion && !editando ? listeners : {})}
                 {...(modoEdicion ? attributes : {})}
                 onClick={(e) => {
                     e.stopPropagation()
-                    if (!isDragging) onSeleccionar(bloque.id)
+                    if (!isDragging) {
+                        if (modoEdicion) {
+                            onSeleccionar(bloque.id)
+                        } else if (bloque.tipo === 'stat' && onVerDetalle) {
+                            const rect = bloqueRef.current?.getBoundingClientRect()
+                            onVerDetalle(bloque, rect)
+                        }
+                    }
                 }}
                 onDoubleClick={modoEdicion ? iniciarEdicion : undefined}
             >

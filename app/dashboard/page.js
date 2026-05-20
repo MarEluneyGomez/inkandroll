@@ -47,7 +47,8 @@ export default function Dashboard() {
       stats: { fuerza: 10, destreza: 10, constitucion: 10, inteligencia: 10, sabiduria: 10, carisma: 10 },
       proficiency: 2,
       competencies: [],
-      layout: []
+      layout: [],
+      saving_throws: []
     })
     if (!error) {
       setNombre('')
@@ -57,6 +58,11 @@ export default function Dashboard() {
     }
     setLoading(false)
   }
+
+  async function eliminarPlanilla(planillaId) {
+    const { error } = await supabase.from('planillas').delete().eq('id', planillaId)
+    if (!error) cargarPlanillas(user.id)
+}
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -91,9 +97,25 @@ export default function Dashboard() {
       <h2>Tus personajes</h2>
       {planillas.length === 0 && <p style={{ color: '#888' }}>Todavía no tenés personajes.</p>}
       {planillas.map(p => (
-        <div key={p.id} onClick={() => router.push(`/planilla/${p.id}`)} style={{ border: '1px solid #ccc', borderRadius: 6, padding: 16, marginBottom: 12 }}>
+        <div key={p.id} onClick={() => router.push(`/planilla/${p.id}`)} 
+            style={{ border: '1px solid #ccc', borderRadius: 6, padding: 16, marginBottom: 12, position: 'relative', cursor: 'pointer' }}>
           <h3>{p.nombre}</h3>
           <p style={{ color: '#666' }}>{p.raza} · {p.clase} · Nivel {p.nivel}</p>
+           <button
+              onClick={(e) => {
+                  e.stopPropagation()
+                  if (confirm(`¿Eliminar a ${p.nombre}?`)) eliminarPlanilla(p.id)
+              }}
+              style={{
+                  position: 'absolute', top: 12, right: 12,
+                  background: 'transparent', border: 'none',
+                  color: '#999', fontSize: 18, cursor: 'pointer'
+              }}
+              onMouseEnter={e => e.target.style.color = '#cc0000'}
+              onMouseLeave={e => e.target.style.color = '#999'}
+          >
+              ×
+          </button>
         </div>
       ))}
     </div>

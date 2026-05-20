@@ -19,6 +19,15 @@ export const HABILIDADES = [
     {id:'persuasion',       label:'Persuación',         stat:'carisma'},
 ]
 
+export const SALVACIONES = [
+    { id: 'save_fuerza', label: 'Salvacion Fuerza', stat:'fuerza' },
+    { id: 'save_destreza', label: 'Salvacion Destreza', stat:'destreza' },
+    { id: 'save_constitucion', label: 'Salvacion Constitucion', stat:'constitucion' },
+    { id: 'save_inteligencia', label: 'Salvacion Inteligencia', stat:'inteligencia' },
+    { id: 'save_sabiduria', label: 'Salvacion Sabiduria', stat:'sabiduria' },
+    { id: 'save_carisma', label: 'Salvacion Carisma', stat:'carisma' }
+]
+
 export const HABILIDADES_POR_STAT = {
     fuerza:         HABILIDADES.filter(h => h.stat === 'fuerza'),
     destreza:       HABILIDADES.filter(h => h.stat === 'destreza'),
@@ -33,7 +42,6 @@ export function calcularModificador(valor) {
 }
 
 export function calcularBono(stat, habilidadId, stats, proficiency, competencies, expertises) {
-    console.log('stat:', stat, 'valor:', stats[stat])
     const mod = calcularModificador(stats[stat])
     const esCompetente = competencies?.includes(habilidadId)
     const esMaestria = expertises?.includes(habilidadId)

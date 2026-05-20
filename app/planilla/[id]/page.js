@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
@@ -8,15 +8,17 @@ import { DndContext, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import BloqueArrastrable from './components/BloqueArrastrable'
 import BloqueHabilidades from './components/BloqueHabilidades'
 import PanelPersonalizacion from './components/PanelPersonalizacion'
+import DesplegableStat from './components/DesplegableStat'
+
 
 const GRILLA = 20
 
 const BLOQUES_STATS_INICIALES = (stats) => [
     { id: 'fuerza',       tipo: 'stat', label: 'Fuerza',   valor: stats?.fuerza || 10,       x: 60,  y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
     { id: 'destreza',     tipo: 'stat', label: 'Destreza', valor: stats?.destreza || 10,      x: 180, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
-    { id: 'constitucion', tipo: 'stat', label: 'Const.',   valor: stats?.constitucion || 10,  x: 300, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
-    { id: 'inteligencia', tipo: 'stat', label: 'Intel.',   valor: stats?.inteligencia || 10,  x: 420, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
-    { id: 'sabiduria',    tipo: 'stat', label: 'Sabid.',   valor: stats?.sabiduria || 10,     x: 540, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
+    { id: 'constitucion', tipo: 'stat', label: 'Constitucion',   valor: stats?.constitucion || 10,  x: 300, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
+    { id: 'inteligencia', tipo: 'stat', label: 'Inteligencia',   valor: stats?.inteligencia || 10,  x: 420, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
+    { id: 'sabiduria',    tipo: 'stat', label: 'Sabiduria',   valor: stats?.sabiduria || 10,     x: 540, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
     { id: 'carisma',      tipo: 'stat', label: 'Carisma',  valor: stats?.carisma || 10,       x: 660, y: 80, ancho: 100, alto: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' },
 ]
 
@@ -40,10 +42,14 @@ export default function EditarPlanilla() {
     const [modoEdicion, setModoEdicion] = useState(true)
     const [mostrarMenuAgregar, setMostrarMenuAgregar] = useState(false)
     const [stats, setStats] = useState(null)
+    const [desplegableBloque, setDesplegableBloque] = useState(null)
+    const [desplegableRect, setDesplegableRect] = useState(null)
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: { distance: 5 }
     }))
+
+    const canvasRef = useRef(null)
 
     useEffect(() => {
         async function cargar() {
@@ -101,7 +107,8 @@ export default function EditarPlanilla() {
             layout: bloques, 
             stats: stats,
             competencies: planilla.competencies, 
-            expertises: planilla.expertises
+            expertises: planilla.expertises,
+            saving_throws: planilla.saving_throws
          }).eq('id', id)
         setGuardando(false)
     }
@@ -147,10 +154,15 @@ export default function EditarPlanilla() {
                 </div>
             </div>
 
-            {/* Area de Trabajo con Scroll */}
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
                 <div 
-                    onClick={() => { setSeleccionado(null); setMostrarMenuAgregar(false) }}
+                    ref={canvasRef}
+                    onClick={() => { 
+                        setSeleccionado(null); 
+                        setMostrarMenuAgregar(false);
+                        setDesplegableBloque(null);
+                        setDesplegableRect(null)
+                    }}
                     className="area-planilla"
                     style={{ 
                         flex: 1, 
@@ -160,7 +172,6 @@ export default function EditarPlanilla() {
                         padding: '100px'
                     }}
                 >
-                    {/* Expansor de área invisible (para permitir el scroll infinito) */}
                     <div style={{ 
                         width: '3000px', 
                         height: '3000px', 
@@ -191,6 +202,15 @@ export default function EditarPlanilla() {
                                     onSeleccionar={setSeleccionado} onRedimensionar={handleRedimensionar}
                                     onCambiarValor={handleCambiarValor} modoEdicion={modoEdicion}
                                     onEliminar={handleEliminarBloque}
+                                    onVerDetalle={(bloque, rect) => {
+                                        if (desplegableBloque?.id === bloque.id) {
+                                            setDesplegableBloque(null)
+                                            setDesplegableRect(null)
+                                        } else {
+                                            setDesplegableBloque(bloque)
+                                            setDesplegableRect(rect)
+                                        }
+                                    }}
                                 />
                             )
                         }
@@ -199,7 +219,20 @@ export default function EditarPlanilla() {
                     })}
                 </div>
             </DndContext>
-
+            {!modoEdicion && desplegableBloque && (
+                <DesplegableStat
+                    key={desplegableBloque.id}
+                    bloque={desplegableBloque}
+                    rect={desplegableRect}
+                    stats={stats}
+                    proficiency={planilla.proficiency}
+                    competencies={planilla.competencies}
+                    expertises={planilla.expertises}
+                    savingThrows={planilla.saving_throws}
+                    onCambiarPlanilla={handleCambiarPlanilla}
+                    onCerrar={() => setDesplegableBloque(null)}
+                />
+            )}
             {modoEdicion && seleccionado && (
                 <PanelPersonalizacion bloque={bloques.find(b => b.id === seleccionado)} onCambiar={handleCambiarBloque} onCerrar={() => setSeleccionado(null)} />
             )}
