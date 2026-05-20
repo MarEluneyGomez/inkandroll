@@ -20,7 +20,8 @@ export default function BloqueArrastrable({
     onSeleccionar,
     onRedimensionar,
     onCambiarValor,
-    modoEdicion
+    modoEdicion,
+    onEliminar
 }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: bloque.id,
@@ -35,7 +36,6 @@ export default function BloqueArrastrable({
     const esCirculo = bloque.forma === 'circulo'
 
     function iniciarEdicion(e) {
-        console.log('doble click!')
         e.stopPropagation()
         setValorTemp(bloque.valor ?? 0)
         setEditando(true)
@@ -44,7 +44,7 @@ export default function BloqueArrastrable({
     function confirmarEdicion(){
         const nuevo = parseInt(valorTemp)
         if (!isNaN(nuevo)) onCambiarValor(bloque.id, nuevo)
-            setEditando(false)
+        setEditando(false)
     }
 
     const style = {
@@ -67,7 +67,8 @@ export default function BloqueArrastrable({
         boxShadow: seleccionado
             ? '0 0 0 3px rgba(201,162,39,0.5)'
             : '2px 3px 8px rgba(0,0,0,0.4)',
-        transition: 'border 0.15s, box-shadow 0.15s'
+        transition: 'border 0.15s, box-shadow 0.15s',
+        zIndex: seleccionado ? 10 : 1
     }
 
     return (
@@ -83,6 +84,40 @@ export default function BloqueArrastrable({
                 }}
                 onDoubleClick={modoEdicion ? iniciarEdicion : undefined}
             >
+                {modoEdicion && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEliminar(bloque.id);
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: esCirculo ? '12%' : 2,
+                            right: esCirculo ? '12%' : 2,
+                            width: 15,
+                            height: 15,
+                            background: 'transparent',
+                            color: 'rgba(0, 0, 0, 0.4)',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 13,
+                            fontWeight:300,
+                            fontFamily: 'Arial, sans-serif',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 30,
+                            transition: 'color 0.2s ease',
+                            lineHeight: 1,
+                            padding: 0
+                        }}
+                        onMouseEnter={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.8)'}
+                        onMouseLeave={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.4)'}
+                    >
+                        ×
+                    </button>
+                )}
+
                 <div style={{
                     fontSize: 9,
                     fontWeight: 'bold',
@@ -190,7 +225,7 @@ export default function BloqueArrastrable({
                     <div style={{
                         width: 10,
                         height: 10,
-                        borderTop:    esquina.dy === -1 ? '2px solid #c9a227' : 'none',
+                        borderTop:     esquina.dy === -1 ? '2px solid #c9a227' : 'none',
                         borderBottom: esquina.dy === 1  ? '2px solid #c9a227' : 'none',
                         borderLeft:   esquina.dx === -1 ? '2px solid #c9a227' : 'none',
                         borderRight:  esquina.dx === 1  ? '2px solid #c9a227' : 'none',

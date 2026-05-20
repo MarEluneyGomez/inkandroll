@@ -43,22 +43,24 @@ export default function PanelPersonalizacion({ bloque, onCambiar, onCerrar }) {
                 </div>
             </div>
 
-            <div>
-                <div style={{ fontSize: 10, marginBottom: 6, opacity: 0.7 }}>FORMA</div>
-                <div style={{ display: 'flex', gap: 6 }}>
-                    {['cuadrado', 'circulo'].map(f => (
-                        <button key={f} onClick={() => onCambiar('forma', f)}
-                            style={{
-                                flex: 1, padding: '4px 0', fontSize: 10,
-                                background: bloque.forma === f ? '#c9a227' : 'transparent',
-                                color: bloque.forma === f ? '#1a0e04' : '#f4ead5',
-                                border: '1px solid #c9a227', borderRadius: 4, cursor: 'pointer'
-                            }}>
-                            {f}
-                        </button>
-                    ))}
+            {bloque.tipo !== 'habilidades' && (
+                <div>
+                    <div style={{ fontSize: 10, marginBottom: 6, opacity: 0.7 }}>FORMA</div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                        {['cuadrado', 'circulo'].map(f => (
+                            <button key={f} onClick={() => onCambiar('forma', f)}
+                                style={{
+                                    flex: 1, padding: '4px 0', fontSize: 10,
+                                    background: bloque.forma === f ? '#c9a227' : 'transparent',
+                                    color: bloque.forma === f ? '#1a0e04' : '#f4ead5',
+                                    border: '1px solid #c9a227', borderRadius: 4, cursor: 'pointer'
+                                }}>
+                                {f}
+                            </button>
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     )
 }
