@@ -9,6 +9,12 @@ import BloqueArrastrable from './components/BloqueArrastrable'
 import BloqueHabilidades from './components/BloqueHabilidades'
 import PanelPersonalizacion from './components/PanelPersonalizacion'
 import DesplegableStat from './components/DesplegableStat'
+import BloqueSalvacionMuerte from './components/BloqueSalvacionMuerte.js'
+import BloquePuntosGolpeTemp from './components/BloquePuntosGolpeTemp'
+import BloqueDadosGolpe from './components/BloqueDadosGolpe'
+import BloqueContador from './components/BloqueContador'
+import BloqueMonedas from './components/BloqueMonedas'
+import DesplegableMonedas from './components/DesplegableMonedas'
 
 
 const GRILLA = 20
@@ -28,6 +34,11 @@ const TIPOS_BLOQUES = [
     { tipo: 'ac',          label: 'Clase de armadura' },
     { tipo: 'proficiency', label: 'Bono de proficiencia' },
     { tipo: 'speed',       label: 'Velocidad' },
+    { tipo: 'salvacion_muerte', label: 'Salvaciones de muerte' },
+    { tipo: 'pg_temp',   label: 'PG Temporales' },
+    { tipo: 'dados_golpe', label: 'Dados de golpe' },
+    { tipo: 'contador',  label: 'Contador' },
+    { tipo: 'monedas', label: 'Monedas' },
 ]
 
 export default function EditarPlanilla() {
@@ -44,6 +55,7 @@ export default function EditarPlanilla() {
     const [stats, setStats] = useState(null)
     const [desplegableBloque, setDesplegableBloque] = useState(null)
     const [desplegableRect, setDesplegableRect] = useState(null)
+    const [desplegableReorganizar, setDesplegableReorganizar] = useState(null)
 
     const sensors = useSensors(useSensor(PointerSensor, {
         activationConstraint: { distance: 5 }
@@ -96,9 +108,21 @@ export default function EditarPlanilla() {
             ac:          { ancho: 100, alto: 100, label: 'CA', valor: 10 },
             proficiency: { ancho: 100, alto: 100, label: 'Prof.', valor: planilla?.proficiency || 2 },
             speed:       { ancho: 100, alto: 100, label: 'Vel.', valor: 30 },
+            salvacion_muerte: { ancho: 180, alto: 100, label: 'Salvaciones de muerte', maxExitos: 3, maxFallos: 3, exitosMarcados: 0, fallosMarcados: 0 },
+            pg_temp:     { ancho: 140, alto: 100, label: 'PG Temporales', valor: 0 },
+            dados_golpe: { ancho: 200, alto: 110, label: 'Dados de golpe', tipoDado: 'd8', cantidad: 3, usados: 0 },
+            contador:    { ancho: 140, alto: 120, titulo: 'Contador', valor: 0, maximo: null },
+            monedas: { ancho: 160, alto: 100, pp: 0, po: 0, pe: 0, pa: 0, pc: 0, ocultas: [],
+                        pc_a_pa: 10, pa_a_pe: 10, pe_a_po: 2, po_a_pp: 10 },
         }
         setBloques(prev => [...prev, { ...base, ...extras[tipo] }])
         setMostrarMenuAgregar(false)
+    }
+
+    function handleCambiarCampoBloque(id, campo, valor) {
+        setBloques(prev => prev.map(b =>
+            b.id === id ? {...b, [campo]: valor} : b
+        ))
     }
 
     async function guardarLayout() {
@@ -194,6 +218,72 @@ export default function EditarPlanilla() {
                                 />
                             )
                         }
+
+                        if (b.tipo === 'salvacion_muerte') return (
+                            <BloqueSalvacionMuerte
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                            />
+                        )
+
+                        if (b.tipo === 'pg_temp') return (
+                            <BloquePuntosGolpeTemp
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                            />
+                        )
+
+                        if (b.tipo === 'dados_golpe') return (
+                            <BloqueDadosGolpe
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                            />
+                        )
+
+                        if (b.tipo === 'contador') return (
+                            <BloqueContador
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                            />
+                        )
+
+                        if (b.tipo === 'monedas') return (
+                            <BloqueMonedas
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                                onVerDetalle={(bloque, rect, reorganizar) => {
+                                    if (desplegableBloque?.id === bloque.id) {
+                                        setDesplegableBloque(null)
+                                        setDesplegableRect(null)
+                                        setDesplegableReorganizar(null)
+                                    } else {
+                                        setDesplegableBloque(bloque)
+                                        setDesplegableRect(rect)
+                                        setDesplegableReorganizar(() => reorganizar)
+                                    }
+                                }}
+                                                            />
+                        )
                         
                         if (b.tipo) {
                             return (
@@ -219,7 +309,8 @@ export default function EditarPlanilla() {
                     })}
                 </div>
             </DndContext>
-            {!modoEdicion && desplegableBloque && (
+            
+            {!modoEdicion && desplegableBloque && desplegableBloque.tipo !== 'monedas' && (
                 <DesplegableStat
                     key={desplegableBloque.id}
                     bloque={desplegableBloque}
@@ -233,6 +324,17 @@ export default function EditarPlanilla() {
                     onCerrar={() => setDesplegableBloque(null)}
                 />
             )}
+
+            {!modoEdicion && desplegableBloque?.tipo === 'monedas' && (
+                <DesplegableMonedas
+                    bloque={desplegableBloque}
+                    rect={desplegableRect}
+                    onCambiarBloque={handleCambiarCampoBloque}
+                    onReorganizar={desplegableReorganizar}
+                    onCerrar={() => setDesplegableBloque(null)}
+                />
+            )}
+
             {modoEdicion && seleccionado && (
                 <PanelPersonalizacion bloque={bloques.find(b => b.id === seleccionado)} onCambiar={handleCambiarBloque} onCerrar={() => setSeleccionado(null)} />
             )}

@@ -4,8 +4,9 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { calcularModificador, formatearBono } from './habilidades'
 import { useState, useRef } from 'react'
+import { FORMAS } from './FormasSVG'
+import { GRILLA, EsquinasRedimensionar } from './BloqueUtils'
 
-const GRILLA = 20
 
 const esquinas = [
     { cursor: 'se-resize', dx: 1,  dy: 1  },
@@ -38,6 +39,7 @@ export default function BloqueArrastrable({
     const ancho = bloque.ancho || 100
     const alto = bloque.alto || 100
     const esCirculo = bloque.forma === 'circulo'
+    const labelFontSize = Math.max(6, Math.min(9, (bloque.ancho || 100) / 12))
 
     function iniciarEdicion(e) {
         e.stopPropagation()
@@ -75,11 +77,22 @@ export default function BloqueArrastrable({
         zIndex: seleccionado ? 10 : 1
     }
 
+    const FormaComponente = FORMAS[bloque.forma] || FORMAS.cuadrado
+
     return (
-        <>
+         <>
             <div
                 ref={(node) => { setNodeRef(node); bloqueRef.current = node }}
-                style={style}
+                style={{
+                    position: 'absolute',
+                    left: bloque.x,
+                    top: bloque.y,
+                    transform: CSS.Translate.toString(transform),
+                    cursor: modoEdicion && !editando ? 'grab' : 'default',
+                    userSelect: 'none',
+                    filter: seleccionado ? 'drop-shadow(0 0 6px rgba(201,162,39,0.8))' : 'none',
+                    transition: 'filter 0.15s',
+                }}
                 {...(modoEdicion && !editando ? listeners : {})}
                 {...(modoEdicion ? attributes : {})}
                 onClick={(e) => {
@@ -95,95 +108,63 @@ export default function BloqueArrastrable({
                 }}
                 onDoubleClick={modoEdicion ? iniciarEdicion : undefined}
             >
+                <FormaComponente
+                    ancho={bloque.ancho || 100}
+                    alto={bloque.alto || 100}
+                    color={bloque.color || '#f4ead5'}
+                    colorBorde={bloque.colorTexto || '#2c1810'}
+                >
+
+                    <div style={{ fontSize: labelFontSize, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 2, opacity: 0.7, color: bloque.colorTexto || '#2c1810' }}>
+                        {bloque.label}
+                    </div>
+
+                    {editando ? (
+                        <input
+                            type="number"
+                            value={valorTemp}
+                            autoFocus
+                            onChange={(e) => setValorTemp(e.target.value)}
+                            onBlur={confirmarEdicion}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmarEdicion()
+                                if (e.key === 'Escape') setEditando(false)
+                            }}
+                            style={{
+                                width: '70%', fontSize: 20, fontWeight: 900,
+                                textAlign: 'center', border: 'none',
+                                borderBottom: '2px solid #c9a227',
+                                background: 'transparent',
+                                color: bloque.colorTexto || '#2c1810', outline: 'none',
+                            }}
+                        />
+                    ) : (
+                        <>
+                            <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, color: bloque.colorTexto || '#2c1810' }}>
+                                {bloque.valor}
+                            </div>
+                            {bloque.tipo === 'stat' && (
+                                <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2, color: bloque.colorTexto || '#2c1810' }}>
+                                    {formatearBono(calcularModificador(bloque.valor))}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </FormaComponente>
                 {modoEdicion && (
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onEliminar(bloque.id);
-                        }}
+                        onClick={(e) => { e.stopPropagation(); onEliminar(bloque.id) }}
                         style={{
-                            position: 'absolute',
-                            top: esCirculo ? '12%' : 2,
-                            right: esCirculo ? '12%' : 2,
-                            width: 15,
-                            height: 15,
-                            background: 'transparent',
-                            color: 'rgba(0, 0, 0, 0.4)',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: 13,
-                            fontWeight:300,
-                            fontFamily: 'Arial, sans-serif',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            zIndex: 30,
-                            transition: 'color 0.2s ease',
-                            lineHeight: 1,
-                            padding: 0
+                            position: 'absolute', top: 2, right: 2,
+                            background: 'transparent', color: 'rgb(255, 0, 0)',
+                            border: 'none', cursor: 'pointer', fontSize: 13,
+                            fontWeight: 300, lineHeight: 1, padding: 0, zIndex: 30
                         }}
-                        onMouseEnter={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.8)'}
-                        onMouseLeave={(e) => e.target.style.color = 'rgba(0, 0, 0, 0.4)'}
-                    >
-                        ×
-                    </button>
-                )}
-
-                <div style={{
-                    fontSize: 9,
-                    fontWeight: 'bold',
-                    textTransform: 'uppercase',
-                    marginBottom: 2,
-                    opacity: 0.7
-                }}>
-                    {bloque.label}
-                </div>
-
-                {editando ? (
-                    <input
-                        type="number"
-                        value={valorTemp}
-                        autoFocus
-                        onChange={(e) => setValorTemp(e.target.value)}
-                        onBlur={confirmarEdicion}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') confirmarEdicion()
-                            if (e.key === 'Escape') setEditando(false)
-                        }}
-                        style={{
-                            width: '70%',
-                            fontSize: 20,
-                            fontWeight: 900,
-                            textAlign: 'center',
-                            border: 'none',
-                            borderBottom: '2px solid #c9a227',
-                            background: 'transparent',
-                            color: bloque.colorTexto || '#2c1810',
-                            outline: 'none',
-                        }}
-                    />
-                ) : (
-                    <>
-                        <div style={{
-                            fontSize: esCirculo ? 22 : 26,
-                            fontWeight: 900,
-                            lineHeight: 1
-                        }}>
-                            {bloque.valor}
-                        </div>
-                        {bloque.tipo === 'stat' && (
-                            <div style={{
-                                fontSize: 11,
-                                opacity: 0.7,
-                                marginTop: 2
-                            }}>
-                                {formatearBono(calcularModificador(bloque.valor))}
-                            </div>
-                        )}
-                    </>
+                        onMouseEnter={e => e.target.style.color = 'rgb(255, 0, 0)'}
+                        onMouseLeave={e => e.target.style.color = 'rgb(255, 0, 0)'}
+                    >×</button>
                 )}
             </div>
-
             {modoEdicion && seleccionado && esquinas.map((esquina, i) => (
                 <div
                     key={i}

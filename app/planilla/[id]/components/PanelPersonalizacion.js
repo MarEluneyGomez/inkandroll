@@ -1,5 +1,7 @@
 'use client'
 
+import { LISTA_FORMAS } from './FormasSVG'
+
 export default function PanelPersonalizacion({ bloque, onCambiar, onCerrar }) {
     if (!bloque) return null
 
@@ -46,16 +48,17 @@ export default function PanelPersonalizacion({ bloque, onCambiar, onCerrar }) {
             {bloque.tipo !== 'habilidades' && (
                 <div>
                     <div style={{ fontSize: 10, marginBottom: 6, opacity: 0.7 }}>FORMA</div>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                        {['cuadrado', 'circulo'].map(f => (
-                            <button key={f} onClick={() => onCambiar('forma', f)}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {LISTA_FORMAS.map(f => (
+                            <button key={f.id} onClick={() => onCambiar('forma', f.id)}
                                 style={{
-                                    flex: 1, padding: '4px 0', fontSize: 10,
-                                    background: bloque.forma === f ? '#c9a227' : 'transparent',
-                                    color: bloque.forma === f ? '#1a0e04' : '#f4ead5',
-                                    border: '1px solid #c9a227', borderRadius: 4, cursor: 'pointer'
+                                    padding: '4px 8px', fontSize: 10,
+                                    background: bloque.forma === f.id ? '#c9a227' : 'transparent',
+                                    color: bloque.forma === f.id ? '#1a0e04' : '#f4ead5',
+                                    border: '1px solid #c9a227', borderRadius: 4, cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
                                 }}>
-                                {f}
+                                {f.label}
                             </button>
                         ))}
                     </div>
