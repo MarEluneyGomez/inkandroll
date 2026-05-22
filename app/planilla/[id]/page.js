@@ -15,6 +15,8 @@ import BloqueDadosGolpe from './components/BloqueDadosGolpe'
 import BloqueContador from './components/BloqueContador'
 import BloqueMonedas from './components/BloqueMonedas'
 import DesplegableMonedas from './components/DesplegableMonedas'
+import BloqueHP from './components/BloqueHP'
+import DesplegableHP from './components/DesplegableHP'
 
 
 const GRILLA = 20
@@ -50,7 +52,7 @@ export default function EditarPlanilla() {
     const [bloques, setBloques] = useState([])
     const [guardando, setGuardando] = useState(false)
     const [seleccionado, setSeleccionado] = useState(null)
-    const [modoEdicion, setModoEdicion] = useState(true)
+    const [modoEdicion, setModoEdicion] = useState(false)
     const [mostrarMenuAgregar, setMostrarMenuAgregar] = useState(false)
     const [stats, setStats] = useState(null)
     const [desplegableBloque, setDesplegableBloque] = useState(null)
@@ -73,6 +75,23 @@ export default function EditarPlanilla() {
         }
         cargar()
     }, [id])
+
+    useEffect(() => {
+    if (modoEdicion) return
+    if (bloques.length === 0) return
+
+    const timeout = setTimeout(async () => {
+        await supabase.from('planillas').update({
+            layout: bloques,
+            stats: stats,
+            competencies: planilla?.competencies,
+            expertises: planilla?.expertises,
+            saving_throws: planilla?.saving_throws
+        }).eq('id', id)
+    }, 1000)
+
+    return () => clearTimeout(timeout)
+}, [bloques, modoEdicion])
 
     function handleDragEnd(event) {
         const { active, delta } = event
@@ -104,7 +123,7 @@ export default function EditarPlanilla() {
         const base = { id: nuevoId, tipo, x: 100, y: 100, color: '#f4ead5', colorTexto: '#2c1810', forma: 'cuadrado' }
         const extras = {
             habilidades: { ancho: 200, alto: 400, label: 'Habilidades' },
-            hp:          { ancho: 120, alto: 100, label: 'HP', valor: 10 },
+            hp: { ancho: 180, alto: 120, label: 'HP', actual: 10, maximo: 10 },
             ac:          { ancho: 100, alto: 100, label: 'CA', valor: 10 },
             proficiency: { ancho: 100, alto: 100, label: 'Prof.', valor: planilla?.proficiency || 2 },
             speed:       { ancho: 100, alto: 100, label: 'Vel.', valor: 30 },
@@ -112,7 +131,7 @@ export default function EditarPlanilla() {
             pg_temp:     { ancho: 140, alto: 100, label: 'PG Temporales', valor: 0 },
             dados_golpe: { ancho: 200, alto: 110, label: 'Dados de golpe', tipoDado: 'd8', cantidad: 3, usados: 0 },
             contador:    { ancho: 140, alto: 120, titulo: 'Contador', valor: 0, maximo: null },
-            monedas: { ancho: 160, alto: 100, pp: 0, po: 0, pe: 0, pa: 0, pc: 0, ocultas: [],
+            monedas: { ancho: 160, alto: 100, pp: 0, po: 0, pe: 0, pa: 0, pc: 0, ocultas: ['pe'],
                         pc_a_pa: 10, pa_a_pe: 10, pe_a_po: 2, po_a_pp: 10 },
         }
         setBloques(prev => [...prev, { ...base, ...extras[tipo] }])
@@ -150,6 +169,11 @@ export default function EditarPlanilla() {
 
             {/* Header */}
             <div style={{ padding: '10px 20px', background: '#1a0e04', color: '#c9a227', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 }}>
+                <button onClick={() => router.push('/dashboard')}
+                    style={{ background: 'transparent', border: 'none', color: '#c9a227', cursor: 'pointer', fontSize: 18, padding: '0 8px', opacity: 0.7 }}
+                    onMouseEnter={e => e.target.style.opacity = 1}
+                    onMouseLeave={e => e.target.style.opacity = 0.7}
+                >←</button>
                 <span style={{ fontWeight: 'bold' }}>{planilla.nombre}</span>
                 <div style={{ display: 'flex', gap: 10 }}>
                     {modoEdicion && (
@@ -279,10 +303,30 @@ export default function EditarPlanilla() {
                                     } else {
                                         setDesplegableBloque(bloque)
                                         setDesplegableRect(rect)
-                                        setDesplegableReorganizar(() => reorganizar)
+                                        setDesplegableReorganizar({fn: reorganizar})
                                     }
                                 }}
                                                             />
+                        )
+
+                        if (b.tipo === 'hp') return (
+                            <BloqueHP
+                                key={b.id} bloque={b} seleccionado={seleccionado === b.id}
+                                onSeleccionar={(id) => setSeleccionado(prev => prev === id ? null : id)}
+                                onRedimensionar={handleRedimensionar}
+                                onCambiarBloque={handleCambiarCampoBloque}
+                                modoEdicion={modoEdicion}
+                                onEliminar={handleEliminarBloque}
+                                onVerDetalle={(bloque, rect) => {
+                                    if (desplegableBloque?.id === bloque.id) {
+                                        setDesplegableBloque(null)
+                                        setDesplegableRect(null)
+                                    } else {
+                                        setDesplegableBloque(bloque)
+                                        setDesplegableRect(rect)
+                                    }
+                                }}
+                            />
                         )
                         
                         if (b.tipo) {
@@ -309,8 +353,19 @@ export default function EditarPlanilla() {
                     })}
                 </div>
             </DndContext>
-            
-            {!modoEdicion && desplegableBloque && desplegableBloque.tipo !== 'monedas' && (
+
+            {!modoEdicion && desplegableBloque?.tipo === 'hp' && (
+                <DesplegableHP
+                    bloque={bloques.find(b => b.id === desplegableBloque.id)}
+                    rect={desplegableRect}
+                    onCambiarBloque={handleCambiarCampoBloque}
+                    onCerrar={() => setDesplegableBloque(null)}
+                />
+            )}
+                        
+            {!modoEdicion && desplegableBloque && 
+            desplegableBloque.tipo !== 'monedas' && 
+            desplegableBloque.tipo !== 'hp' &&(
                 <DesplegableStat
                     key={desplegableBloque.id}
                     bloque={desplegableBloque}
@@ -327,7 +382,7 @@ export default function EditarPlanilla() {
 
             {!modoEdicion && desplegableBloque?.tipo === 'monedas' && (
                 <DesplegableMonedas
-                    bloque={desplegableBloque}
+                    bloque={bloques.find(b => b.id === desplegableBloque.id)}
                     rect={desplegableRect}
                     onCambiarBloque={handleCambiarCampoBloque}
                     onReorganizar={desplegableReorganizar}

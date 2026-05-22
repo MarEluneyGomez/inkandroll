@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { MONEDAS } from './monedas'
+import { useState, useEffect } from 'react'
 
 export default function DesplegableMonedas({ bloque, rect, onCambiarBloque, onReorganizar, onCerrar }) {
     const ocultas = bloque.ocultas || []
@@ -12,6 +12,16 @@ export default function DesplegableMonedas({ bloque, rect, onCambiarBloque, onRe
         pa: bloque.pa ?? 0,
         pc: bloque.pc ?? 0,
     })
+
+    useEffect(() => {
+        setValores({
+            pp: bloque.pp ?? 0,
+            po: bloque.po ?? 0,
+            pe: bloque.pe ?? 0,
+            pa: bloque.pa ?? 0,
+            pc: bloque.pc ?? 0,
+        })
+    }, [bloque.pp, bloque.po, bloque.pe, bloque.pa, bloque.pc])
 
     function toggleOculta(id) {
         const nuevas = ocultas.includes(id)
@@ -129,7 +139,7 @@ export default function DesplegableMonedas({ bloque, rect, onCambiarBloque, onRe
                 })}
 
                 <div style={{ padding: '8px 12px' }}>
-                    <button onClick={onReorganizar}
+                    <button onClick={() => onReorganizar?.fn?.()}
                         style={{
                             width: '100%', padding: '6px 0', fontSize: 10, fontWeight: 'bold',
                             textTransform: 'uppercase', letterSpacing: '0.1em',

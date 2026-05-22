@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { EsquinasRedimensionar } from './BloqueUtils'
@@ -9,6 +9,8 @@ import { MONEDAS } from './monedas'
 export default function BloqueMonedas({ bloque, seleccionado, onSeleccionar, onRedimensionar, onCambiarBloque, modoEdicion, onEliminar, onVerDetalle }) {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: bloque.id, disabled: !modoEdicion })
     const bloqueRef = useRef(null)
+    const bloqueActual = useRef(bloque)
+    useEffect(() => { bloqueActual.current = bloque }, [bloque])
 
     const ancho = bloque.ancho || 160
     const alto = bloque.alto || 100
@@ -19,30 +21,31 @@ export default function BloqueMonedas({ bloque, seleccionado, onSeleccionar, onR
     const escala = Math.min(ancho / 160, alto / 100)
 
     function reorganizar() {
-    const pc_a_pa = bloque.pc_a_pa ?? 10
-    const pa_a_pe = bloque.pa_a_pe ?? 10
-    const pe_a_po = bloque.pe_a_po ?? 2
-    const po_a_pp = bloque.po_a_pp ?? 10
+        const b = bloqueActual.current
+        const pc_a_pa = b.pc_a_pa ?? 10
+        const pa_a_pe = b.pa_a_pe ?? 10
+        const pe_a_po = b.pe_a_po ?? 2
+        const po_a_pp = b.po_a_pp ?? 10
 
-    let total_pc = (bloque.pc || 0)
-        + (bloque.pa || 0) * pc_a_pa
-        + (bloque.pe || 0) * pc_a_pa * pa_a_pe
-        + (bloque.po || 0) * pc_a_pa * pa_a_pe * pe_a_po
-        + (bloque.pp || 0) * pc_a_pa * pa_a_pe * pe_a_po * po_a_pp
+        let total_pc = (b.pc || 0)
+            + (b.pa || 0) * pc_a_pa
+            + (b.pe || 0) * pc_a_pa * pa_a_pe
+            + (b.po || 0) * pc_a_pa * pa_a_pe * pe_a_po
+            + (b.pp || 0) * pc_a_pa * pa_a_pe * pe_a_po * po_a_pp
 
-    const pp = Math.floor(total_pc / (pc_a_pa * pa_a_pe * pe_a_po * po_a_pp))
-    total_pc -= pp * (pc_a_pa * pa_a_pe * pe_a_po * po_a_pp)
-    const po = Math.floor(total_pc / (pc_a_pa * pa_a_pe * pe_a_po))
-    total_pc -= po * (pc_a_pa * pa_a_pe * pe_a_po)
-    const pe = Math.floor(total_pc / (pc_a_pa * pa_a_pe))
-    total_pc -= pe * (pc_a_pa * pa_a_pe)
-    const pa = Math.floor(total_pc / pc_a_pa)
-    total_pc -= pa * pc_a_pa
-    const pc = total_pc
+        const pp = Math.floor(total_pc / (pc_a_pa * pa_a_pe * pe_a_po * po_a_pp))
+        total_pc -= pp * (pc_a_pa * pa_a_pe * pe_a_po * po_a_pp)
+        const po = Math.floor(total_pc / (pc_a_pa * pa_a_pe * pe_a_po))
+        total_pc -= po * (pc_a_pa * pa_a_pe * pe_a_po)
+        const pe = Math.floor(total_pc / (pc_a_pa * pa_a_pe))
+        total_pc -= pe * (pc_a_pa * pa_a_pe)
+        const pa = Math.floor(total_pc / pc_a_pa)
+        total_pc -= pa * pc_a_pa
+        const pc = total_pc
 
-    const nuevos = { pp, po, pe, pa, pc }
-    Object.entries(nuevos).forEach(([id, val]) => onCambiarBloque(bloque.id, id, val))
-}
+        const nuevos = { pp, po, pe, pa, pc }
+        Object.entries(nuevos).forEach(([id, val]) => onCambiarBloque(bloqueActual.current.id, id, val))
+    }
 
     return (
         <>

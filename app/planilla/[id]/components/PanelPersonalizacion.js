@@ -64,6 +64,38 @@ export default function PanelPersonalizacion({ bloque, onCambiar, onCerrar }) {
                     </div>
                 </div>
             )}
+            
+            {bloque.tipo === 'monedas' && (
+                <div style={{ marginTop: 12 }}>
+                    <div style={{ fontSize: 10, marginBottom: 8, opacity: 0.7 }}>CONVERSIONES</div>
+                    {[
+                        { id: 'pc_a_pa', label: 'PC → PA', default: 10 },
+                        { id: 'pa_a_pe', label: 'PA → PE', default: 10 },
+                        { id: 'pe_a_po', label: 'PE → PO', default: 2  },
+                        { id: 'po_a_pp', label: 'PO → PP', default: 10 },
+                    ].map(c => (
+                        <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ fontSize: 10 }}>{c.label}</span>
+                            <input
+                                type="number"
+                                value={bloque[c.id] ?? c.default}
+                                min={1}
+                                onChange={e => {
+                                    const v = parseInt(e.target.value)
+                                    onCambiar(c.id, isNaN(v) || v < 1 ? c.default : v)
+                                }}
+                                style={{
+                                    width: 48, fontSize: 11, textAlign: 'center',
+                                    background: 'transparent', border: 'none',
+                                    borderBottom: '1px solid rgba(201,162,39,0.4)',
+                                    color: '#f4ead5', outline: 'none'
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
+
         </div>
     )
 }
